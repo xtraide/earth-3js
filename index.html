@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>My first three.js app</title>
+	<style>
+		body {
+			background-color: black;
+			margin: 0;
+		}
+	</style>
+	<script type="importmap">
+			{
+				"imports": {
+					"three": "../build/three.module.js",
+					"three/addons/": "./jsm/"
+				}
+			}
+            </script>
+</head>
+
+<body>
+	<input type="submit" value="tttttttttt" id="t">
+
+
+	<script type="module">
+		import * as THREE from 'three';
+		import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+		import * as TWEEN from 'https://cdn.skypack.dev/@tweenjs/tween.js';
+
+		import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+		const scene = new THREE.Scene(); // pour cree une scene 
+		scene.background = new THREE.Color(0x000000);
+
+
+		const renderer = new THREE.WebGLRenderer(); // cree un renderer ppour faire un rendu des objec sur la scenee 
+		renderer.setSize(window.innerWidth / 2, window.innerHeight / 2);
+		document.body.appendChild(renderer.domElement);  //This is a <canvas> element the renderer uses to display the scene to us.
+
+		const PointLight = new THREE.PointLight(0xffffff);
+		PointLight.position.set(0, 10, 0);
+
+		const ambientLight = new THREE.AmbientLight(0xffffff);
+		scene.add(PointLight, ambientLight);
+
+		const LightHelper = new THREE.PointLightHelper(PointLight);
+
+		const gridHelper = new THREE.GridHelper(200, 50);
+		//scene.add(LightHelper, gridHelper);
+
+
+
+
+		const earthGroup = new THREE.Group();
+
+		earthGroup.scale.set(1, 1, 1);
+		earthGroup.position.set(0, 0, 0);
+		scene.add(earthGroup);
+
+		const cube = new THREE.Mesh(
+			new THREE.BoxGeometry(0.1, 0.1, 0.1),
+			new THREE.MeshBasicMaterial({ color: 0xff0000 })
+		);
+		cube.position.set(-0.6, -0.4, -0.6);
+		scene.add(cube);
+		const cube2 = new THREE.Mesh(
+			new THREE.BoxGeometry(51, 51, 51),
+			new THREE.MeshBasicMaterial({ color: 0xff0000 })
+		);
+		cube.position.set(-0.6, -0.4, -0.6);
+
+
+
+
+
+
+
+
+
+
+
+
+		/*TEXTURE */
+		const texture = new THREE.TextureLoader().load('textures/earth albedo.jpg');
+		texture.wrapS = THREE.RepeatWrapping;
+		texture.wrapT = THREE.RepeatWrapping;
+
+
+
+		// earth
+
+		var material1 = new THREE.MeshBasicMaterial({ map: texture });
+
+		var geometry1 = new THREE.SphereGeometry(1, 32, 16);
+
+		var sphere = new THREE.Mesh(geometry1, material1);
+		earthGroup.add(sphere);
+
+		const cloudsMat = new THREE.MeshBasicMaterial({
+			map: new THREE.TextureLoader().load('textures/clouds earth.png'),
+			transparent: true,
+			opacity: 0.8,
+			depthWrite: false,
+			depthTest: false,
+			blending: THREE.AdditiveBlending
+		});
+		const cloudsMesh = new THREE.Mesh(geometry1, cloudsMat);
+		cloudsMesh.scale.setScalar(1.003);
+		earthGroup.add(cloudsMesh);
+
+		const earthBump = new THREE.MeshBasicMaterial({
+			map: new THREE.TextureLoader().load('textures/earth bump.jpg'),
+			transparent: true,
+			blending: THREE.AdditiveBlending,
+			depthWrite: false,
+			depthTest: false,
+
+
+		});
+		const earthBumpMesh = new THREE.Mesh(geometry1, earthBump);
+		earthGroup.add(earthBumpMesh);
+
+
+
+
+		// CAMERA
+		const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000); // cree une camera pour voir la scene (fov,rapport hauteur/largeur,render proche,loin pour faire des rendu different)
+		camera.position.z = 1.5; // on met la camera a une position 
+		camera.position.y = 2;
+		camera.lookAt(0, 7, 0);
+
+
+
+		//ORBIT
+		const controls = new OrbitControls(camera, renderer.domElement);
+		controls.target.set(0, 0.5, 0);
+		controls.update();
+		/*controls.enablePan = false;
+		controls.enableDamping = true;
+		controls.minDistance = 13;
+		controls.maxDistance = 25;*/
+
+		function addStar() {
+			const geometry = new THREE.SphereGeometry(1, 24, 24);
+			const material = new THREE.MeshStandardMaterial({ color: 0xffffff });
+			const star = new THREE.Mesh(geometry, material);
+
+			const [x, y, z] = Array(3).fill().map(() => THREE.MathUtils.randFloatSpread(2000, 1000));
+
+			star.position.set(x, y, z);
+			earthGroup.add(star);
+
+		}
+		Array(2000).fill().forEach(addStar);
+
+		function animate() {
+
+			requestAnimationFrame(animate);
+			TWEEN.update();
+			renderer.render(scene, camera);
+		}
+		animate();
+
+		/// LISTENER BOUTON ///
+		const btn = document.querySelector('input'); // poiteur sur le bouton
+
+		btn.addEventListener('click', () => {
+
+			/**
+			 * Calculates the vector from the cube to the origin and sets the camera position and orientation.
+			 * @param {THREE.Vector3} cubePosition - The position of the cube.
+			 * @param {THREE.Vector3} earthPosition - The position of the earth.
+			 * @param {THREE.Camera} camera - The camera object.
+			 * @param {number} radius - The distance between the camera and the planet.
+			 * @param {number} duration - The duration of the camera animation in milliseconds.
+			 */
+			// Calculate the vector from the cube to the origin
+			var direction = new THREE.Vector3().subVectors(cube.position, new THREE.Vector3(0, 0, 0)).normalize();
+			// This line calculates the directional vector from the cube to the origin (0,0,0)
+
+			const radius = 2;
+			// This is the distance you want the camera to be from the planet. Replace this with the desired distance.
+
+			var directionToPlanet = new THREE.Vector3().subVectors(earthGroup.position, camera.position).normalize();
+			// This line calculates the directional vector from the camera's position to the planet's position
+
+			// Define the initial angle of the camera around the circle
+			var angle = Math.atan2(directionToPlanet.z, directionToPlanet.x);
+			// This line calculates the initial angle of the camera with respect to the planet
+
+			// Longitude ranges from -180 to 180 degrees
+			// Calculate the vector from the camera to the planet
+			var directionToCube = new THREE.Vector3().subVectors(cube.position, new THREE.Vector3(0, 0, 0)).normalize();
+			// This line calculates the directional vector from the cube to the origin (0,0,0)
+
+			// Calculate the angle between the current position of the camera and the position of the cube
+			var targetAngle = Math.atan2(directionToCube.z, directionToCube.x);
+			// This line calculates the target angle of the camera with respect to the cube
+
+			// Create an animation to rotate the camera to the cube position
+			const rotateCamera = new TWEEN.Tween({ angle: angle })
+				.to({ angle: targetAngle }, 2000) // 2000 ms = 2 seconds
+				.easing(TWEEN.Easing.Linear.None) // Easing for a smooth transition
+				.onUpdate(({ angle }) => {
+					// Calculate the new camera position
+					camera.position.x = radius * Math.cos(angle);
+					camera.position.z = radius * Math.sin(angle);
+					camera.position.y = radius * Math.cos(angle);
+
+					// Orient the camera towards the cube
+					camera.lookAt(cube.position);
+				})
+				// These lines create an animation that rotates the camera from its initial angle to the target angle in 2 seconds.
+				// During the animation, the camera's position is constantly updated to follow a circle around the origin, and the camera is always oriented towards the cube.
+				.onComplete(() => {
+					const moveCamera = new TWEEN.Tween(camera.position)
+						.to({ x: camera.position.x - 1.5, y: camera.position.y - 0.5, z: camera.position.z + 1 }, 2000)
+						.easing(TWEEN.Easing.Cubic.InOut)
+						.onComplete(() => {
+							earthGroup.add(cube2);
+						})
+						.start();
+				})
+				.start();
+
+		});
+
+		/// !LISTENER BOUTON ///
+	</script>
+
+
+
+</body>
+
+</html>
