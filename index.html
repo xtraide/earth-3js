@@ -37,7 +37,7 @@
 
 
 		const renderer = new THREE.WebGLRenderer(); // cree un renderer ppour faire un rendu des objec sur la scenee 
-		renderer.setSize(window.innerWidth / 2, window.innerHeight / 2);
+		renderer.setSize(window.innerWidth, window.innerHeight);
 		document.body.appendChild(renderer.domElement);  //This is a <canvas> element the renderer uses to display the scene to us.
 
 		const PointLight = new THREE.PointLight(0xffffff);
@@ -53,12 +53,14 @@
 
 
 
-
+		// groupe de la terre
 		const earthGroup = new THREE.Group();
-
 		earthGroup.scale.set(1, 1, 1);
 		earthGroup.position.set(0, 0, 0);
 		scene.add(earthGroup);
+
+
+		//cube pour situe austalie
 
 		const cube = new THREE.Mesh(
 			new THREE.BoxGeometry(0.1, 0.1, 0.1),
@@ -66,21 +68,12 @@
 		);
 		cube.position.set(-0.6, -0.4, -0.6);
 		scene.add(cube);
+
 		const cube2 = new THREE.Mesh(
-			new THREE.BoxGeometry(51, 51, 51),
+			new THREE.BoxGeometry(3, 3, 1),
 			new THREE.MeshBasicMaterial({ color: 0xff0000 })
 		);
-		cube.position.set(-0.6, -0.4, -0.6);
-
-
-
-
-
-
-
-
-
-
+		cube2.position.set(-1, -1, 2);
 
 
 		/*TEXTURE */
@@ -99,6 +92,8 @@
 		var sphere = new THREE.Mesh(geometry1, material1);
 		earthGroup.add(sphere);
 
+
+		// earth clouds
 		const cloudsMat = new THREE.MeshBasicMaterial({
 			map: new THREE.TextureLoader().load('textures/clouds earth.png'),
 			transparent: true,
@@ -107,10 +102,13 @@
 			depthTest: false,
 			blending: THREE.AdditiveBlending
 		});
+
 		const cloudsMesh = new THREE.Mesh(geometry1, cloudsMat);
 		cloudsMesh.scale.setScalar(1.003);
 		earthGroup.add(cloudsMesh);
 
+
+		// earth bump
 		const earthBump = new THREE.MeshBasicMaterial({
 			map: new THREE.TextureLoader().load('textures/earth bump.jpg'),
 			transparent: true,
@@ -126,11 +124,21 @@
 
 
 
+
+
 		// CAMERA
 		const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000); // cree une camera pour voir la scene (fov,rapport hauteur/largeur,render proche,loin pour faire des rendu different)
 		camera.position.z = 1.5; // on met la camera a une position 
 		camera.position.y = 2;
-		camera.lookAt(0, 7, 0);
+		camera.lookAt(earthGroup.position); // on fait en sorte que la camera regarde la scene
+
+		const camera2 = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000); // cree une camera pour voir la scene (fov,rapport hauteur/largeur,render proche,loin pour faire des rendu different)
+		camera2.position.z = 9.5; // on met la camera a une position 
+		camera2.position.y = 2;
+		camera2.lookAt(earthGroup.position);
+		scene.add(camera2);
+
+
 
 
 
@@ -216,13 +224,17 @@
 				// These lines create an animation that rotates the camera from its initial angle to the target angle in 2 seconds.
 				// During the animation, the camera's position is constantly updated to follow a circle around the origin, and the camera is always oriented towards the cube.
 				.onComplete(() => {
-					const moveCamera = new TWEEN.Tween(camera.position)
-						.to({ x: camera.position.x - 1.5, y: camera.position.y - 0.5, z: camera.position.z + 1 }, 2000)
-						.easing(TWEEN.Easing.Cubic.InOut)
-						.onComplete(() => {
-							earthGroup.add(cube2);
-						})
-						.start();
+					setTimeout(function () {
+						const moveCamera = new TWEEN.Tween(camera.position)
+							.to({ x: camera.position.x - 1.5, y: camera.position.y - 0.5, z: camera.position.z + 1 }, 2000)
+							.easing(TWEEN.Easing.Cubic.InOut)
+							.onComplete(() => {
+								scene.add(cube2);
+								renderer.render(scene, camera2);
+							})
+							.start();
+					}, 1000);
+
 				})
 				.start();
 
