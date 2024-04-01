@@ -31,7 +31,8 @@
 		import * as TWEEN from 'https://cdn.skypack.dev/@tweenjs/tween.js';
 
 		import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-
+		let aspect = window.innerWidth / window.innerHeight;
+		let insetWidth, insetHeight;
 		const scene = new THREE.Scene(); // pour cree une scene 
 		scene.background = new THREE.Color(0x000000);
 
@@ -39,6 +40,8 @@
 		const renderer = new THREE.WebGLRenderer(); // cree un renderer ppour faire un rendu des objec sur la scenee 
 		renderer.setSize(window.innerWidth, window.innerHeight);
 		document.body.appendChild(renderer.domElement);  //This is a <canvas> element the renderer uses to display the scene to us.
+
+
 
 		const PointLight = new THREE.PointLight(0xffffff);
 		PointLight.position.set(0, 10, 0);
@@ -126,18 +129,19 @@
 
 
 
-		// CAMERA
-		const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000); // cree une camera pour voir la scene (fov,rapport hauteur/largeur,render proche,loin pour faire des rendu different)
-		camera.position.z = 1.5; // on met la camera a une position 
+		// CAMERA #1
+		const camera = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000); // cree une camera pour voir la scene (fov,rapport hauteur/largeur,render proche,loin pour faire des rendu different)
+		camera.position.z = 2.5; // on met la camera a une position 
 		camera.position.y = 2;
 		camera.lookAt(earthGroup.position); // on fait en sorte que la camera regarde la scene
 
-		const camera2 = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000); // cree une camera pour voir la scene (fov,rapport hauteur/largeur,render proche,loin pour faire des rendu different)
+		// camera #2
+		const camera2 = new THREE.PerspectiveCamera(75, aspect, 0.1, 1000); // cree une camera pour voir la scene (fov,rapport hauteur/largeur,render proche,loin pour faire des rendu different)
 		camera2.position.z = 9.5; // on met la camera a une position 
 		camera2.position.y = 2;
-		camera2.lookAt(earthGroup.position);
-		scene.add(camera2);
+		camera2.lookAt(cube2.position); // on fait en sorte que la camera regarde la scene
 
+		scene.add(camera);
 
 
 
@@ -150,7 +154,9 @@
 		controls.enableDamping = true;
 		controls.minDistance = 13;
 		controls.maxDistance = 25;*/
-
+		const controls2 = new OrbitControls(camera2, renderer.domElement);
+		controls.target.set(0, 0.5, 0);
+		controls.update();
 		function addStar() {
 			const geometry = new THREE.SphereGeometry(1, 24, 24);
 			const material = new THREE.MeshStandardMaterial({ color: 0xffffff });
@@ -168,8 +174,42 @@
 
 			requestAnimationFrame(animate);
 			TWEEN.update();
+
+			renderer.setViewport(0, 0, window.innerWidth, window.innerHeight);
 			renderer.render(scene, camera);
+			renderer.clearDepth();
+
+			renderer.setScissorTest(true);
+			renderer.setScissor(
+				window.innerWidth - insetWidth - 16,
+				window.innerHeight - insetHeight - 16,
+				insetWidth,
+				insetHeight
+			);
+			renderer.setViewport(
+				window.innerWidth - insetWidth - 16,
+				window.innerHeight - insetHeight - 16,
+				insetWidth,
+				insetHeight
+			);
+
+			renderer.render(scene, camera2);
+			renderer.setScissorTest(false);
+
 		}
+		function rezise() {
+			camera.aspect = window.innerWidth / window.innerHeight;
+			camera.updateProjectionMatrix();
+			renderer.setSize(window.innerWidth, window.innerHeight);
+
+			insetWidth = window.innerWidth / 4;
+			insetHeight = window.innerHeight / 4;
+			camera2.aspect = window.innerWidth / window.innerHeight;
+			camera2.updateProjectionMatrix();
+
+		}
+		window.addEventListener('resize', rezise);
+		rezise();
 		animate();
 
 		/// LISTENER BOUTON ///
@@ -229,8 +269,9 @@
 							.to({ x: camera.position.x - 1.5, y: camera.position.y - 0.5, z: camera.position.z + 1 }, 2000)
 							.easing(TWEEN.Easing.Cubic.InOut)
 							.onComplete(() => {
-								scene.add(cube2);
-								renderer.render(scene, camera2);
+
+
+
 							})
 							.start();
 					}, 1000);
@@ -242,6 +283,140 @@
 
 		/// !LISTENER BOUTON ///
 	</script>
+
+
+	<div style="background-color: aqua;  position:absolute; display:flex; width:50%; height:auto;" id="container-dig">
+		<div id="dig" style="">
+			<script type="module">
+				import * as THREE from 'three';
+				import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+				import * as TWEEN from 'https://cdn.skypack.dev/@tweenjs/tween.js';
+
+				import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+				const scenedig = new THREE.Scene(); // pour cree une scenedig
+				scenedig.background = new THREE.Color(0x000000);
+
+
+				const rendererdig = new THREE.WebGLRenderer(); // cree un rendererdig ppour faire un rendu des objec sur la scenee
+				rendererdig.setSize(window.innerWidth / 2, window.innerHeight / 2);
+				document.getElementById("dig").appendChild(rendererdig.domElement);  //This is a <canvas> element the rendererdig uses to display the scenedig to us.
+
+				const PointLightdig = new THREE.PointLight(0xffffff);
+				PointLightdig.position.set(0, 10, 0);
+
+				const ambientLightDIG = new THREE.AmbientLight(0xffffff);
+				scenedig.add(PointLightdig, ambientLightDIG);
+
+				const LightHelperdig = new THREE.PointLightHelper(PointLightdig);
+
+				const gridHelperdig = new THREE.GridHelper(200, 50);
+				scenedig.add(LightHelperdig, gridHelperdig);
+
+				/*const loader = new GLTFLoader();
+					
+				loader.load( 'sans_nom.glb', function ( gltf ) {
+					
+					scenedig.add(gltf.scenedig);
+					
+				}, undefined, function ( error ) {
+					
+					console.error(error);
+					
+				} );*/
+				var test = 0xbfe3dd;
+
+				const geometrydig = new THREE.BoxGeometry(5, 5, 5); // objet 3d   la un cubetest 1,1,1
+				const materialdig = new THREE.MeshStandardMaterial({ color: test }); // cree une texture avec une couleur
+				const cubetest = new THREE.Mesh(geometrydig, materialdig); // objet geometrique
+				cubetest.position.set(0, 5, 0);
+				/*const geometry2 = new THREE.BoxGeometry( 150, 20, 150 ); // objet 3d   la un cubetest 1,1,1
+				const material2 = new THREE.MeshBasicMaterial( {color: 0x686868 } ); // cree une texture avec une couleur
+				const floor = new THREE.Mesh( geometry2, material2 ); // objet geometrique
+				floor.position.set(0,-10,0);
+				scenedig.add( cubetest,floor ); // ajoute a la scenedig le cubetest*/
+				// CAMERA
+				const cameradig = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000); // cree une cameradig pour voir la scenedig (fov,rapport hauteur/largeur,render proche,loin pour faire des rendu different)
+				cameradig.position.z = 15; // on met la cameradig a une position
+				cameradig.position.y = 15;
+				cameradig.lookAt(0, 7, 0);
+
+
+
+				//ORBIT
+				const controlsdig = new OrbitControls(cameradig, rendererdig.domElement);
+				controlsdig.target.set(0, 0.5, 0);
+				controlsdig.update();
+				/*controlsdig.enablePan = false;
+				controlsdig.enableDamping = true;
+				controlsdig.minDistance = 13;
+				controlsdig.maxDistance = 25;*/
+
+				function addStar() {
+					const geometrydig = new THREE.SphereGeometry(1, 24, 24);
+					const materialdig = new THREE.MeshStandardMaterial({ color: 0x16F8DF });
+					const star = new THREE.Mesh(geometrydig, materialdig);
+
+					const [x, y, z] = Array(3).fill().map(() => THREE.MathUtils.randFloatSpread(100));
+
+					star.position.set(x, y, z);
+					scenedig.add(star);
+
+				}
+				Array(200).fill().forEach(addStar);
+
+				function animate() {
+					requestAnimationFrame(animate);
+
+					controlsdig.update();
+
+					rendererdig.render(scenedig, cameradig);
+				}; //fonction permet d'animer le cubetest
+
+
+				animate();
+
+			</script>
+		</div>
+
+		<div style="">
+			<h2 align="center"> titre </h2>
+			<p style="text-align:justify; margin:10px;"> Les premiers yidakis n'ont pas été fabriqués par les mains
+				humaines, mais
+				par la nature elle-même,
+				en
+				particulier grâce
+				à la collaboration des termites. Ces insectes, réputés pour leur capacité à creuser le bois,
+				auraient
+				sculpté
+				l'intérieur des branches d'eucalyptus, créant ainsi les premiers tubes sonores.
+
+				Cependant, ce n'était pas simplement un acte de destruction pour ces termites. Selon la croyance
+				aborigène, en soufflant
+				à travers ces branches, les termites ont été encouragés à quitter le bois. Mais plutôt que de
+				simplement
+				disparaître,
+				les termites ont été transformés en étoiles, ajoutant une dimension magique à cette histoire.
+
+				Cette métaphore poétique de la transformation des termites en étoiles renforce le lien profond entre
+				les
+				peuples
+				aborigènes et la nature qui les entoure. C'est un rappel de la beauté et de la complexité du monde
+				naturel, ainsi que de
+				la relation symbiotique entre les humains et leur environnement.
+
+				Ainsi, chaque fois qu'un yidaki résonne, que ce soit lors de cérémonies traditionnelles, de
+				rassemblements
+				communautaires ou de performances artistiques, il rappelle la puissance de la légende qui l'a
+				façonné,
+				celle où les
+				termites ont donné naissance aux étoiles, inscrivant ainsi leur présence dans le firmament et dans
+				le
+				cœur des peuples
+				aborigènes pour l'éternité. </p>
+		</div>
+	</div>
 
 
 
